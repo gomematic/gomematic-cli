@@ -9,4 +9,4 @@ LABEL maintainer="Thomas Boerger <thomas@webhippie.de>" `
 ENTRYPOINT ["c:\\gomematic-cli.exe"]
 CMD ["help"]
 
-COPY gomematic-cli.exe c:\gomematic-cli.exe
+COPY bin/gomematic-cli.exe c:\gomematic-cli.exe

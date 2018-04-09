@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"runtime"
 	"time"
 
 	"github.com/gomematic/gomematic-cli/pkg/version"
@@ -11,8 +10,6 @@ import (
 )
 
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-
 	if env := os.Getenv("GOMEMATIC_ENV_FILE"); env != "" {
 		godotenv.Load(env)
 	}
