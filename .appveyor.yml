@@ -6,9 +6,9 @@ clone_folder: 'c:\gopath\src\github.com\gomematic\gomematic-cli'
 environment:
   GOPATH: c:\gopath
   DOCKER_USERNAME:
-    secure: '4YzzahbEiMZQJpOCOd1LAw=='
+    secure: 'KAd8fvufvtwNH+f2HnRo0Q=='
   DOCKER_PASSWORD:
-    secure: 'VqO/G3Zfslu6zSLdwHKO+Q=='
+    secure: '+VYMVfoYKQZTPkMS3J3NJQ8Sh0/FGWj/1R5eJdz3ZpE='
 
 install:
   - ps: |
@@ -29,11 +29,11 @@ build_script:
   - cmd: |
       make build
   - cmd: |
-      docker build -f Dockerfile.windows -t gomematic/gomematic-cli:windows .
+      docker build -f docker/Dockerfile.windows.amd64 -t gomematic/gomematic-cli:windows-amd64 .
 
 test_script:
   - cmd: |
-      docker run --rm gomematic/gomematic-cli:windows --help
+      docker run --rm gomematic/gomematic-cli:windows-amd64 --help
 
 deploy_script:
   - ps: |
@@ -45,19 +45,19 @@ deploy_script:
         if ( $env:APPVEYOR_REPO_TAG -eq 'true' ) {
           $major,$minor,$patch = $env:APPVEYOR_REPO_TAG_NAME.substring(1).split('.')
 
-          docker push gomematic/gomematic-cli:windows
+          docker push gomematic/gomematic-cli:windows-amd64
 
-          docker tag gomematic/gomematic-cli:windows gomematic/gomematic-cli:$major.$minor.$patch-windows
-          docker push gomematic/gomematic-cli:$major.$minor.$patch-windows
+          docker tag gomematic/gomematic-cli:windows-amd64 gomematic/gomematic-cli:$major.$minor.$patch-windows-amd64
+          docker push gomematic/gomematic-cli:$major.$minor.$patch-windows-amd64
 
-          docker tag gomematic/gomematic-cli:windows gomematic/gomematic-cli:$major.$minor-windows
-          docker push gomematic/gomematic-cli:$major.$minor-windows
+          docker tag gomematic/gomematic-cli:windows-amd64 gomematic/gomematic-cli:$major.$minor-windows-amd64
+          docker push gomematic/gomematic-cli:$major.$minor-windows-amd64
 
-          docker tag gomematic/gomematic-cli:windows gomematic/gomematic-cli:$major-windows
-          docker push gomematic/gomematic-cli:$major-windows
+          docker tag gomematic/gomematic-cli:windows-amd64 gomematic/gomematic-cli:$major-windows-amd64
+          docker push gomematic/gomematic-cli:$major-windows-amd64
         } else {
           if ( $env:APPVEYOR_REPO_BRANCH -eq 'master' ) {
-            docker push gomematic/gomematic-cli:windows
+            docker push gomematic/gomematic-cli:windows-amd64
           } else {
             Write-Host Ignoring feature branch.
           }
