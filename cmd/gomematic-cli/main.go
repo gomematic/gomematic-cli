@@ -16,7 +16,7 @@ func main() {
 
 	app := &cli.App{
 		Name:     "gomematic-cli",
-		Version:  version.Version.String(),
+		Version:  version.String,
 		Usage:    "lightweight and powerful homematic",
 		Compiled: time.Now(),
 

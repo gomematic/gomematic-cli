@@ -1,7 +1,6 @@
 # Gomematic: CLI client
 
 [![Build Status](http://drone.gomematic.tech/api/badges/gomematic/gomematic-cli/status.svg)](http://drone.gomematic.tech/gomematic/gomematic-cli)
-[![Build Status](https://ci.appveyor.com/api/projects/status/fp6xqxon6f4yg3qm?svg=true)](https://ci.appveyor.com/project/gomematicz/gomematic-cli)
 [![Stories in Ready](https://badge.waffle.io/gomematic/gomematic-api.svg?label=ready&title=Ready)](http://waffle.io/gomematic/gomematic-api)
 [![Join the Matrix chat at https://matrix.to/#/#gomematic:matrix.org](https://img.shields.io/badge/matrix-%23gomematic-7bc9a4.svg)](https://matrix.to/#/#gomematic:matrix.org)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/6bbad9ecac6c42d6b0a9722d97979398)](https://www.codacy.com/app/gomematic/gomematic-cli?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=gomematic/gomematic-cli&amp;utm_campaign=Badge_Grade)
@@ -21,23 +20,13 @@ You can download prebuilt binaries from the GitHub releases or from our [downloa
 
 ## Development
 
-Make sure you have a working Go environment, for further reference or a guide take a look at the [install instructions](http://golang.org/doc/install.html). This project requires Go >= v1.8.
+Make sure you have a working Go environment, for further reference or a guide take a look at the [install instructions](http://golang.org/doc/install.html). This project requires Go >= v1.11.
 
 ```bash
-go get -d github.com/gomematic/gomematic-cli
-cd $GOPATH/src/github.com/gomematic/gomematic-cli
+git clone https://github.com/gomematic/gomematic-cli.git
+cd gomematic-cli
 
-# install retool
-make retool
-
-# sync dependencies
-make sync
-
-# generate code
-make generate
-
-# build binary
-make build
+make sync generate build
 
 ./bin/gomematic-cli -h
 ```
