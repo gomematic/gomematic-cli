@@ -7,7 +7,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
-	"github.com/gomematic/gomematic-go/gomematic"
+	"github.com/gomematic/gomematic-go/models"
 	"gopkg.in/urfave/cli.v2"
 )
 
@@ -16,20 +16,20 @@ var sprigFuncMap = sprig.TxtFuncMap()
 
 // globalFuncMap provides global template helper functions.
 var globalFuncMap = template.FuncMap{
-	"teamlist": func(s []*gomematic.Team) string {
+	"teamlist": func(s []*models.Team) string {
 		res := []string{}
 
 		for _, row := range s {
-			res = append(res, row.String())
+			res = append(res, *row.Name)
 		}
 
 		return strings.Join(res, ", ")
 	},
-	"userlist": func(s []*gomematic.User) string {
+	"userlist": func(s []*models.User) string {
 		res := []string{}
 
 		for _, row := range s {
-			res = append(res, row.String())
+			res = append(res, *row.Username)
 		}
 
 		return strings.Join(res, ", ")

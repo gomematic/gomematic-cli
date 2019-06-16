@@ -5,9 +5,21 @@ import (
 	"os"
 	"text/template"
 
-	"github.com/gomematic/gomematic-go/gomematic"
+	"github.com/go-openapi/strfmt"
+	"github.com/gomematic/gomematic-go/gomematic/auth"
+	"github.com/gomematic/gomematic-go/gomematic/profile"
+	"github.com/gomematic/gomematic-go/models"
 	"gopkg.in/urfave/cli.v2"
 )
+
+// tmplProfileLogin represents a expiring login token.
+var tmplProfileLogin = "Token: \x1b[33m{{ .Token }} \x1b[0m" + `
+Expires: {{ .ExpiresAt }}
+`
+
+// tmplProfileToken represents a permanent login token.
+var tmplProfileToken = "Token: \x1b[33m{{ .Token }} \x1b[0m" + `
+`
 
 // tmplProfileShow represents a profile within details view.
 var tmplProfileShow = "Slug: \x1b[33m{{ .Slug }} \x1b[0m" + `
@@ -16,8 +28,8 @@ Username: {{ .Username }}
 Email: {{ .Email }}
 Active: {{ .Active }}
 Admin: {{ .Admin }}
-Created: {{ .CreatedAt.Format "Mon Jan _2 15:04:05 MST 2006" }}
-Updated: {{ .UpdatedAt.Format "Mon Jan _2 15:04:05 MST 2006" }}
+Created: {{ .CreatedAt }}
+Updated: {{ .UpdatedAt }}
 `
 
 // Profile provides the sub-command for the profile API.
@@ -27,22 +39,8 @@ func Profile() *cli.Command {
 		Usage: "profile commands",
 		Subcommands: []*cli.Command{
 			{
-				Name:  "show",
-				Usage: "show profile details",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:  "format",
-						Value: tmplProfileShow,
-						Usage: "custom output format",
-					},
-				},
-				Action: func(c *cli.Context) error {
-					return Handle(c, ProfileShow)
-				},
-			},
-			{
-				Name:  "token",
-				Usage: "show your token",
+				Name:  "login",
+				Usage: "login by credentials",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:  "username",
@@ -54,9 +52,45 @@ func Profile() *cli.Command {
 						Value: "",
 						Usage: "password for authentication",
 					},
+					&cli.StringFlag{
+						Name:   "format",
+						Value:  tmplProfileLogin,
+						Usage:  "custom output format",
+						Hidden: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					return Handle(c, ProfileLogin)
+				},
+			},
+			{
+				Name:  "token",
+				Usage: "show your token",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:   "format",
+						Value:  tmplProfileToken,
+						Usage:  "custom output format",
+						Hidden: true,
+					},
 				},
 				Action: func(c *cli.Context) error {
 					return Handle(c, ProfileToken)
+				},
+			},
+			{
+				Name:  "show",
+				Usage: "show profile details",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:   "format",
+						Value:  tmplProfileShow,
+						Usage:  "custom output format",
+						Hidden: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					return Handle(c, ProfileShow)
 				},
 			},
 			{
@@ -69,14 +103,14 @@ func Profile() *cli.Command {
 						Usage: "provide a slug",
 					},
 					&cli.StringFlag{
-						Name:  "username",
-						Value: "",
-						Usage: "provide a username",
-					},
-					&cli.StringFlag{
 						Name:  "email",
 						Value: "",
-						Usage: "provide a email",
+						Usage: "provide an email",
+					},
+					&cli.StringFlag{
+						Name:  "username",
+						Value: "",
+						Usage: "provide an username",
 					},
 					&cli.StringFlag{
 						Name:  "password",
@@ -92,12 +126,35 @@ func Profile() *cli.Command {
 	}
 }
 
-// ProfileShow provides the sub-command to show profile details.
-func ProfileShow(c *cli.Context, client gomematic.ClientAPI) error {
-	record, err := client.ProfileGet()
+// ProfileLogin provides the sub-command to login by credentials.
+func ProfileLogin(c *cli.Context, client *Client) error {
+	if !c.IsSet("username") {
+		return fmt.Errorf("please provide a username")
+	}
+
+	if !c.IsSet("password") {
+		return fmt.Errorf("please provide a password")
+	}
+
+	username := c.String("username")
+	password := strfmt.Password(c.String("password"))
+
+	resp, err := client.Auth.LoginUser(
+		auth.NewLoginUserParams().WithAuthLogin(&models.AuthLogin{
+			Username: &username,
+			Password: &password,
+		}),
+	)
 
 	if err != nil {
-		return err
+		switch val := err.(type) {
+		case *auth.LoginUserUnauthorized:
+			return fmt.Errorf(*val.Payload.Message)
+		case *auth.LoginUserDefault:
+			return fmt.Errorf(*val.Payload.Message)
+		default:
+			return PrettyError(err)
+		}
 	}
 
 	tmpl, err := template.New(
@@ -107,94 +164,176 @@ func ProfileShow(c *cli.Context, client gomematic.ClientAPI) error {
 	).Funcs(
 		sprigFuncMap,
 	).Parse(
-		fmt.Sprintf("%s\n", c.String("format")),
+		fmt.Sprintln(c.String("format")),
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return tmpl.Execute(os.Stdout, record)
+	return tmpl.Execute(os.Stdout, resp.Payload)
 }
 
 // ProfileToken provides the sub-command to show your token.
-func ProfileToken(c *cli.Context, client gomematic.ClientAPI) error {
-	if !client.IsAuthenticated() {
-		if !c.IsSet("username") {
-			return fmt.Errorf("please provide a username")
+func ProfileToken(c *cli.Context, client *Client) error {
+	resp, err := client.Profile.TokenProfile(
+		profile.NewTokenProfileParams(),
+		client.AuthInfo,
+	)
+
+	if err != nil {
+		switch val := err.(type) {
+		case *profile.TokenProfileForbidden:
+			return fmt.Errorf(*val.Payload.Message)
+		case *profile.TokenProfileInternalServerError:
+			return fmt.Errorf(*val.Payload.Message)
+		case *profile.TokenProfileDefault:
+			return fmt.Errorf(*val.Payload.Message)
+		default:
+			return PrettyError(err)
 		}
-
-		if !c.IsSet("password") {
-			return fmt.Errorf("please provide a password")
-		}
-
-		login, err := client.AuthLogin(
-			c.String("username"),
-			c.String("password"),
-		)
-
-		if err != nil {
-			return err
-		}
-
-		client = gomematic.NewClientToken(
-			c.String("server"),
-			login.Token,
-		)
 	}
 
-	record, err := client.ProfileToken()
+	tmpl, err := template.New(
+		"_",
+	).Funcs(
+		globalFuncMap,
+	).Funcs(
+		sprigFuncMap,
+	).Parse(
+		fmt.Sprintln(c.String("format")),
+	)
 
 	if err != nil {
 		return err
 	}
 
-	fmt.Fprintf(os.Stdout, "%s\n", record.Token)
-	return nil
+	return tmpl.Execute(os.Stdout, resp.Payload)
+}
+
+// ProfileShow provides the sub-command to show profile details.
+func ProfileShow(c *cli.Context, client *Client) error {
+	resp, err := client.Profile.ShowProfile(
+		profile.NewShowProfileParams(),
+		client.AuthInfo,
+	)
+
+	if err != nil {
+		switch val := err.(type) {
+		case *profile.ShowProfileForbidden:
+			return fmt.Errorf(*val.Payload.Message)
+		case *profile.ShowProfileDefault:
+			return fmt.Errorf(*val.Payload.Message)
+		default:
+			return PrettyError(err)
+		}
+	}
+
+	tmpl, err := template.New(
+		"_",
+	).Funcs(
+		globalFuncMap,
+	).Funcs(
+		sprigFuncMap,
+	).Parse(
+		fmt.Sprintln(c.String("format")),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return tmpl.Execute(os.Stdout, resp.Payload)
 }
 
 // ProfileUpdate provides the sub-command to update the profile.
-func ProfileUpdate(c *cli.Context, client gomematic.ClientAPI) error {
-	record, err := client.ProfileGet()
+func ProfileUpdate(c *cli.Context, client *Client) error {
+	resp, err := client.Profile.ShowProfile(
+		profile.NewShowProfileParams(),
+		client.AuthInfo,
+	)
 
 	if err != nil {
-		return err
+		switch val := err.(type) {
+		case *profile.ShowProfileForbidden:
+			return fmt.Errorf(*val.Payload.Message)
+		case *profile.ShowProfileDefault:
+			return fmt.Errorf(*val.Payload.Message)
+		default:
+			return PrettyError(err)
+		}
 	}
 
+	record := resp.Payload
 	changed := false
 
-	if val := c.String("slug"); c.IsSet("slug") && val != record.Slug {
-		record.Slug = val
+	if val := c.String("slug"); c.IsSet("slug") && val != *record.Slug {
+		record.Slug = &val
 		changed = true
 	}
 
-	if val := c.String("username"); c.IsSet("username") && val != record.Username {
-		record.Username = val
+	if val := c.String("email"); c.IsSet("email") && val != *record.Email {
+		record.Email = &val
 		changed = true
 	}
 
-	if val := c.String("email"); c.IsSet("email") && val != record.Email {
-		record.Email = val
+	if val := c.String("username"); c.IsSet("username") && val != *record.Username {
+		record.Username = &val
 		changed = true
 	}
 
 	if val := c.String("password"); c.IsSet("password") {
-		record.Password = val
+		password := strfmt.Password(val)
+		record.Password = &password
 		changed = true
 	}
 
 	if changed {
-		_, patch := client.ProfilePatch(
-			record,
-		)
+		if err := record.Validate(strfmt.Default); err != nil {
 
-		if patch != nil {
-			return patch
+			//
+			//
+			//
+
+			return err
+
+			//
+			//
+			//
+
 		}
 
-		fmt.Fprintf(os.Stderr, "successfully updated\n")
+		_, err := client.Profile.UpdateProfile(
+			profile.NewUpdateProfileParams().WithProfile(record),
+			client.AuthInfo,
+		)
+
+		if err != nil {
+			switch val := err.(type) {
+			case *profile.UpdateProfileForbidden:
+				return fmt.Errorf(*val.Payload.Message)
+
+				//
+				//
+				//
+
+			case *profile.UpdateProfileUnprocessableEntity:
+				return fmt.Errorf(*val.Payload.Message)
+
+				//
+				//
+				//
+
+			case *profile.UpdateProfileDefault:
+				return fmt.Errorf(*val.Payload.Message)
+			default:
+				return PrettyError(err)
+			}
+		}
+
+		fmt.Fprintln(os.Stderr, "successfully update")
 	} else {
-		fmt.Fprintf(os.Stderr, "nothing to update...\n")
+		fmt.Fprintln(os.Stderr, "nothing to update...")
 	}
 
 	return nil
