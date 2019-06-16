@@ -1,4 +1,4 @@
-image: gomematic/gomematic-cli:{{#if build.tag}}{{trimPrefix build.tag "v"}}{{else}}latest{{/if}}
+image: gomematic/gomematic-cli:{{#if build.tag}}{{trimPrefix "v" build.tag}}{{else}}latest{{/if}}
 {{#if build.tags}}
 tags:
 {{#each build.tags}}
@@ -7,23 +7,23 @@ tags:
 {{/if}}
 manifests:
   -
-    image: gomematic/gomematic-cli:{{#if build.tag}}{{trimPrefix build.tag "v"}}-{{/if}}linux-amd64
+    image: gomematic/gomematic-cli:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}linux-amd64
     platform:
       architecture: amd64
       os: linux
   -
-    image: gomematic/gomematic-cli:{{#if build.tag}}{{trimPrefix build.tag "v"}}-{{/if}}linux-i386
+    image: gomematic/gomematic-cli:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}linux-i386
     platform:
       architecture: 386
       os: linux
   -
-    image: gomematic/gomematic-cli:{{#if build.tag}}{{trimPrefix build.tag "v"}}-{{/if}}linux-arm64v8
+    image: gomematic/gomematic-cli:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}linux-arm64v8
     platform:
       architecture: arm64
       variant: v8
       os: linux
   -
-    image: gomematic/gomematic-cli:{{#if build.tag}}{{trimPrefix build.tag "v"}}-{{/if}}linux-arm32v6
+    image: gomematic/gomematic-cli:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}linux-arm32v6
     platform:
       architecture: arm
       variant: v6
