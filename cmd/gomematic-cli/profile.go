@@ -290,17 +290,7 @@ func ProfileUpdate(c *cli.Context, client *Client) error {
 
 	if changed {
 		if err := record.Validate(strfmt.Default); err != nil {
-
-			//
-			//
-			//
-
-			return err
-
-			//
-			//
-			//
-
+			return ValidteError(err)
 		}
 
 		_, err := client.Profile.UpdateProfile(
@@ -312,20 +302,10 @@ func ProfileUpdate(c *cli.Context, client *Client) error {
 			switch val := err.(type) {
 			case *profile.UpdateProfileForbidden:
 				return fmt.Errorf(*val.Payload.Message)
-
-				//
-				//
-				//
-
-			case *profile.UpdateProfileUnprocessableEntity:
-				return fmt.Errorf(*val.Payload.Message)
-
-				//
-				//
-				//
-
 			case *profile.UpdateProfileDefault:
 				return fmt.Errorf(*val.Payload.Message)
+			case *profile.UpdateProfileUnprocessableEntity:
+				return ValidteError(*val.Payload)
 			default:
 				return PrettyError(err)
 			}

@@ -6,11 +6,14 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 	"syscall"
 
+	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 	"github.com/gomematic/gomematic-go/gomematic"
+	"github.com/gomematic/gomematic-go/models"
 	"gopkg.in/urfave/cli.v2"
 
 	transport "github.com/go-openapi/runtime/client"
@@ -45,8 +48,8 @@ func Handle(c *cli.Context, fn HandleFunc) error {
 			&gomematic.TransportConfig{
 				Host: server.Host,
 				BasePath: path.Join(
-					gomematic.DefaultBasePath,
 					server.Path,
+					gomematic.DefaultBasePath,
 				),
 				Schemes: []string{
 					server.Scheme,
@@ -100,5 +103,48 @@ func PrettyError(err error) error {
 		return fmt.Errorf("failed to connect to the server")
 	default:
 		return err
+	}
+}
+
+func ValidteError(err interface{}) error {
+	switch val := err.(type) {
+	case *errors.CompositeError:
+		if len(val.Errors) > 0 {
+			msgs := []string{
+				"failed to validate record:",
+				"",
+			}
+
+			for _, e := range val.Errors {
+				msgs = append(
+					msgs,
+					e.Error(),
+				)
+			}
+
+			return fmt.Errorf(strings.Join(msgs, "\n"))
+		}
+
+		return fmt.Errorf("failed to validate record")
+	case models.ValidationError:
+		if len(val.Errors) > 0 {
+			msgs := []string{
+				fmt.Sprintf("%s:", *val.Message),
+				"",
+			}
+
+			for _, e := range val.Errors {
+				msgs = append(
+					msgs,
+					fmt.Sprintf("%s: %s", e.Field, e.Message),
+				)
+			}
+
+			return fmt.Errorf(strings.Join(msgs, "\n"))
+		}
+
+		return fmt.Errorf(*val.Message)
+	default:
+		return fmt.Errorf(err.(string))
 	}
 }

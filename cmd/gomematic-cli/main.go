@@ -43,9 +43,9 @@ func main() {
 		},
 
 		Commands: []*cli.Command{
-			Profile(),
 			User(),
 			Team(),
+			Profile(),
 		},
 	}
 

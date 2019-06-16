@@ -3,11 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 	"text/template"
 
 	"github.com/Masterminds/sprig"
-	"github.com/gomematic/gomematic-go/models"
 	"gopkg.in/urfave/cli.v2"
 )
 
@@ -15,26 +13,7 @@ import (
 var sprigFuncMap = sprig.TxtFuncMap()
 
 // globalFuncMap provides global template helper functions.
-var globalFuncMap = template.FuncMap{
-	"teamlist": func(s []*models.Team) string {
-		res := []string{}
-
-		for _, row := range s {
-			res = append(res, *row.Name)
-		}
-
-		return strings.Join(res, ", ")
-	},
-	"userlist": func(s []*models.User) string {
-		res := []string{}
-
-		for _, row := range s {
-			res = append(res, *row.Username)
-		}
-
-		return strings.Join(res, ", ")
-	},
-}
+var globalFuncMap = template.FuncMap{}
 
 // GetIdentifierParam checks and returns the record id/slug parameter.
 func GetIdentifierParam(c *cli.Context) string {

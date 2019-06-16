@@ -384,17 +384,7 @@ func TeamUpdate(c *cli.Context, client *Client) error {
 
 	if changed {
 		if err := record.Validate(strfmt.Default); err != nil {
-
-			//
-			//
-			//
-
-			return err
-
-			//
-			//
-			//
-
+			return ValidteError(err)
 		}
 
 		_, err := client.Team.UpdateTeam(
@@ -408,20 +398,10 @@ func TeamUpdate(c *cli.Context, client *Client) error {
 				return fmt.Errorf(*val.Payload.Message)
 			case *team.UpdateTeamNotFound:
 				return fmt.Errorf(*val.Payload.Message)
-
-				//
-				//
-				//
-
-			case *team.UpdateTeamUnprocessableEntity:
-				return fmt.Errorf(*val.Payload.Message)
-
-				//
-				//
-				//
-
 			case *team.UpdateTeamDefault:
 				return fmt.Errorf(*val.Payload.Message)
+			case *team.UpdateTeamUnprocessableEntity:
+				return ValidteError(*val.Payload)
 			default:
 				return PrettyError(err)
 			}
@@ -450,17 +430,7 @@ func TeamCreate(c *cli.Context, client *Client) error {
 	}
 
 	if err := record.Validate(strfmt.Default); err != nil {
-
-		//
-		//
-		//
-
-		return err
-
-		//
-		//
-		//
-
+		return ValidteError(err)
 	}
 
 	_, err := client.Team.CreateTeam(
@@ -472,20 +442,10 @@ func TeamCreate(c *cli.Context, client *Client) error {
 		switch val := err.(type) {
 		case *team.CreateTeamForbidden:
 			return fmt.Errorf(*val.Payload.Message)
-
-		//
-		//
-		//
-
-		case *team.CreateTeamUnprocessableEntity:
-			return fmt.Errorf(*val.Payload.Message)
-
-		//
-		//
-		//
-
 		case *team.CreateTeamDefault:
 			return fmt.Errorf(*val.Payload.Message)
+		case *team.CreateTeamUnprocessableEntity:
+			return ValidteError(*val.Payload)
 		default:
 			return PrettyError(err)
 		}

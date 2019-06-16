@@ -446,17 +446,7 @@ func UserUpdate(c *cli.Context, client *Client) error {
 
 	if changed {
 		if err := record.Validate(strfmt.Default); err != nil {
-
-			//
-			//
-			//
-
-			return err
-
-			//
-			//
-			//
-
+			return ValidteError(err)
 		}
 
 		_, err := client.User.UpdateUser(
@@ -470,20 +460,10 @@ func UserUpdate(c *cli.Context, client *Client) error {
 				return fmt.Errorf(*val.Payload.Message)
 			case *user.UpdateUserNotFound:
 				return fmt.Errorf(*val.Payload.Message)
-
-				//
-				//
-				//
-
-			case *user.UpdateUserUnprocessableEntity:
-				return fmt.Errorf(*val.Payload.Message)
-
-				//
-				//
-				//
-
 			case *user.UpdateUserDefault:
 				return fmt.Errorf(*val.Payload.Message)
+			case *user.UpdateUserUnprocessableEntity:
+				return ValidteError(*val.Payload)
 			default:
 				return PrettyError(err)
 			}
@@ -535,17 +515,7 @@ func UserCreate(c *cli.Context, client *Client) error {
 	}
 
 	if err := record.Validate(strfmt.Default); err != nil {
-
-		//
-		//
-		//
-
-		return err
-
-		//
-		//
-		//
-
+		return ValidteError(err)
 	}
 
 	_, err := client.User.CreateUser(
@@ -557,20 +527,10 @@ func UserCreate(c *cli.Context, client *Client) error {
 		switch val := err.(type) {
 		case *user.CreateUserForbidden:
 			return fmt.Errorf(*val.Payload.Message)
-
-		//
-		//
-		//
-
-		case *user.CreateUserUnprocessableEntity:
-			return fmt.Errorf(*val.Payload.Message)
-
-		//
-		//
-		//
-
 		case *user.CreateUserDefault:
 			return fmt.Errorf(*val.Payload.Message)
+		case *user.CreateUserUnprocessableEntity:
+			return ValidteError(*val.Payload)
 		default:
 			return PrettyError(err)
 		}
