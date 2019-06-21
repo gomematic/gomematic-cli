@@ -22,7 +22,13 @@ var tmplTeamShow = "Slug: \x1b[33m{{ .Slug }} \x1b[0m" + `
 ID: {{ .ID }}
 Name: {{ .Name }}
 Created: {{ .CreatedAt }}
-Updated: {{ .UpdatedAt }}
+Updated: {{ .UpdatedAt }}{{ with .Users }}
+
+Users:{{ range . }}
+- ID: {{ .User.ID }}
+  Slug: {{ .User.Slug }}
+  Username: {{ .User.Username }}
+{{- end -}}{{ end }}
 `
 
 // tmplTeamUserList represents a row within team user listing.
@@ -384,7 +390,7 @@ func TeamUpdate(c *cli.Context, client *Client) error {
 
 	if changed {
 		if err := record.Validate(strfmt.Default); err != nil {
-			return ValidteError(err)
+			return ValidateError(err)
 		}
 
 		_, err := client.Team.UpdateTeam(
@@ -401,7 +407,7 @@ func TeamUpdate(c *cli.Context, client *Client) error {
 			case *team.UpdateTeamDefault:
 				return fmt.Errorf(*val.Payload.Message)
 			case *team.UpdateTeamUnprocessableEntity:
-				return ValidteError(*val.Payload)
+				return ValidateError(*val.Payload)
 			default:
 				return PrettyError(err)
 			}
@@ -430,7 +436,7 @@ func TeamCreate(c *cli.Context, client *Client) error {
 	}
 
 	if err := record.Validate(strfmt.Default); err != nil {
-		return ValidteError(err)
+		return ValidateError(err)
 	}
 
 	_, err := client.Team.CreateTeam(
@@ -445,7 +451,7 @@ func TeamCreate(c *cli.Context, client *Client) error {
 		case *team.CreateTeamDefault:
 			return fmt.Errorf(*val.Payload.Message)
 		case *team.CreateTeamUnprocessableEntity:
-			return ValidteError(*val.Payload)
+			return ValidateError(*val.Payload)
 		default:
 			return PrettyError(err)
 		}

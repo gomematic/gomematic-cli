@@ -29,7 +29,13 @@ Email: {{ .Email }}
 Active: {{ .Active }}
 Admin: {{ .Admin }}
 Created: {{ .CreatedAt }}
-Updated: {{ .UpdatedAt }}
+Updated: {{ .UpdatedAt }}{{ with .Teams }}
+
+Teams:{{ range . }}
+- ID: {{ .Team.ID }}
+  Slug: {{ .Team.Slug }}
+  Name: {{ .Team.Name }}
+{{- end -}}{{ end }}
 `
 
 // Profile provides the sub-command for the profile API.
@@ -290,7 +296,7 @@ func ProfileUpdate(c *cli.Context, client *Client) error {
 
 	if changed {
 		if err := record.Validate(strfmt.Default); err != nil {
-			return ValidteError(err)
+			return ValidateError(err)
 		}
 
 		_, err := client.Profile.UpdateProfile(
@@ -305,7 +311,7 @@ func ProfileUpdate(c *cli.Context, client *Client) error {
 			case *profile.UpdateProfileDefault:
 				return fmt.Errorf(*val.Payload.Message)
 			case *profile.UpdateProfileUnprocessableEntity:
-				return ValidteError(*val.Payload)
+				return ValidateError(*val.Payload)
 			default:
 				return PrettyError(err)
 			}

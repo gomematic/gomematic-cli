@@ -106,7 +106,8 @@ func PrettyError(err error) error {
 	}
 }
 
-func ValidteError(err interface{}) error {
+// ValidateError catches validation errors and prints it.
+func ValidateError(err interface{}) error {
 	switch val := err.(type) {
 	case *errors.CompositeError:
 		if len(val.Errors) > 0 {

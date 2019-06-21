@@ -25,7 +25,13 @@ Email: {{ .Email }}
 Active: {{ .Active }}
 Admin: {{ .Admin }}
 Created: {{ .CreatedAt }}
-Updated: {{ .UpdatedAt }}
+Updated: {{ .UpdatedAt }}{{ with .Teams }}
+
+Teams:{{ range . }}
+- ID: {{ .Team.ID }}
+  Slug: {{ .Team.Slug }}
+  Name: {{ .Team.Name }}
+{{- end -}}{{ end }}
 `
 
 // tmplUserTeamList represents a row within user team listing.
@@ -446,7 +452,7 @@ func UserUpdate(c *cli.Context, client *Client) error {
 
 	if changed {
 		if err := record.Validate(strfmt.Default); err != nil {
-			return ValidteError(err)
+			return ValidateError(err)
 		}
 
 		_, err := client.User.UpdateUser(
@@ -463,7 +469,7 @@ func UserUpdate(c *cli.Context, client *Client) error {
 			case *user.UpdateUserDefault:
 				return fmt.Errorf(*val.Payload.Message)
 			case *user.UpdateUserUnprocessableEntity:
-				return ValidteError(*val.Payload)
+				return ValidateError(*val.Payload)
 			default:
 				return PrettyError(err)
 			}
@@ -515,7 +521,7 @@ func UserCreate(c *cli.Context, client *Client) error {
 	}
 
 	if err := record.Validate(strfmt.Default); err != nil {
-		return ValidteError(err)
+		return ValidateError(err)
 	}
 
 	_, err := client.User.CreateUser(
@@ -530,7 +536,7 @@ func UserCreate(c *cli.Context, client *Client) error {
 		case *user.CreateUserDefault:
 			return fmt.Errorf(*val.Payload.Message)
 		case *user.CreateUserUnprocessableEntity:
-			return ValidteError(*val.Payload)
+			return ValidateError(*val.Payload)
 		default:
 			return PrettyError(err)
 		}
